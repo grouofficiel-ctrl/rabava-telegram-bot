@@ -22,6 +22,26 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    // admin: register (or re-point) this worker's Telegram webhook using its
+    // own BOT_TOKEN. Gated by WEBHOOK_SECRET so only we can trigger it.
+    if (request.method === "GET" && url.pathname === "/__register") {
+      if (!env.WEBHOOK_SECRET || url.searchParams.get("key") !== env.WEBHOOK_SECRET) {
+        return new Response("Forbidden", { status: 403 });
+      }
+      const hook = `${url.origin}/webhook`;
+      const set = await tg(env.BOT_TOKEN, "setWebhook", {
+        url: hook,
+        secret_token: env.WEBHOOK_SECRET,
+        allowed_updates: ["message", "callback_query"],
+        drop_pending_updates: true,
+      });
+      const info = await tg(env.BOT_TOKEN, "getWebhookInfo", {});
+      const me = await tg(env.BOT_TOKEN, "getMe", {});
+      return new Response(JSON.stringify({ webhook: hook, setWebhook: set, getMe: me, info }, null, 2), {
+        status: 200, headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // health check / friendly GET
     if (request.method === "GET") {
       return new Response("RABAVA STUDIO order bot — alive ✓", { status: 200 });
