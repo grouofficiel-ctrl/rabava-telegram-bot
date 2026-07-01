@@ -17,7 +17,7 @@ export const PAYMENT_NOTE = "USDT / crypto P2P";
 /* ---- SERVICES (mirror of the portfolio config) -------------- */
 export const SERVICES = [
   {
-    id: "hub", icon: "🎮", title: "Creator Hub", price: "$80–300",
+    id: "hub", icon: "🎮", title: "Creator Hub", price: "$100–350",
     featured: true, delivery: "2–4 days",
     tagline: "The flagship — replaces Linktree",
     desc: "A branded mini-site that makes you look like a serious creator: donations, crypto, live status, goals and every link in one fast, mobile-perfect page.",
@@ -52,7 +52,7 @@ export const SERVICES = [
     includes: ["VOD → Shorts / TikToks", "Auto captions + hooks", "AI titles + descriptions", "Social auto-posting", "Notify automation"],
   },
   {
-    id: "community", icon: "💬", title: "Community & Links", price: "from $20",
+    id: "community", icon: "💬", title: "Community & Links", price: "from $40",
     delivery: "1–2 days",
     tagline: "Where your audience gathers",
     desc: "A set-up Discord server and a Telegram channel that pings on live, plus tracked links you control.",
@@ -64,6 +64,13 @@ export const SERVICES = [
     tagline: "When one page isn't enough",
     desc: "A multi-section site with videos, sponsors, merch and a press/media kit that lands real deals.",
     includes: ["Multi-section site", "Videos + live status", "Sponsors + merch", "Press / media kit", "Audience stats"],
+  },
+  {
+    id: "care", icon: "🛠️", title: "Care Plan", price: "from $15/mo",
+    delivery: "ongoing", recurring: true,
+    tagline: "Keep it live, fresh and handled",
+    desc: "Hosting, unlimited link swaps, small content updates and a monthly clicks report — your page stays current without you lifting a finger.",
+    includes: ["Hosting + uptime", "Unlimited link swaps", "Content updates", "Monthly clicks report", "Priority support"],
   },
 ];
 
@@ -99,14 +106,17 @@ function parsePrice(str) {
 
 function estimate(cart) {
   if (!cart.length) return "$0";
-  let min = 0, max = 0, open = false;
+  let min = 0, max = 0, open = false, mo = 0, oneTime = 0;
   for (const id of cart) {
     const s = svc(id);
     if (!s) continue;
     const p = parsePrice(s.price);
-    min += p.min; max += p.max; if (p.open) open = true;
+    if (s.recurring) { mo += p.min; continue; }
+    oneTime++; min += p.min; max += p.max; if (p.open) open = true;
   }
-  return open ? `$${min}+` : `$${min}–${max}`;
+  const base = oneTime ? (open ? `$${min}+` : `$${min}–${max}`) : "";
+  if (mo) return base ? `${base} + $${mo}/mo` : `$${mo}/mo`;
+  return base || "$0";
 }
 
 function freshSession(from = {}) {
@@ -139,6 +149,7 @@ export function screenMenu(session) {
   rows.push([{ text: "⚡ Kick Profile", data: "svc:kick" }, { text: "🎨 Brand Kit", data: "svc:brand" }]);
   rows.push([{ text: "📺 Overlays", data: "svc:overlays" }, { text: "🤖 Automation", data: "svc:content" }]);
   rows.push([{ text: "💬 Community", data: "svc:community" }, { text: "🌐 Full Site", data: "svc:website" }]);
+  rows.push([{ text: "🛠️ Care Plan · monthly", data: "svc:care" }]);
   rows.push([{ text: "🚀 Starter Pack", data: "bnd:starter" }, { text: "👑 Full Kit", data: "bnd:pro" }]);
   rows.push([{ text: "❓ How it works", data: "how" }, cartButton(session)]);
   return { text, keyboard: kb(rows) };
